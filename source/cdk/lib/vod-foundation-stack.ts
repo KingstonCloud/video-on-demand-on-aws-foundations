@@ -3,6 +3,7 @@ import * as s3 from '@aws-cdk/aws-s3';
 import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as subs from '@aws-cdk/aws-sns-subscriptions';
+import * as sns from '@aws-cdk/aws-sns';
 import { HttpMethods } from '@aws-cdk/aws-s3';
 /**
  * AWS Solution Constructs: https://docs.aws.amazon.com/solutions/latest/constructs/
@@ -36,6 +37,11 @@ export class VodFoundation extends cdk.Stack {
             type: "String",
             description: "The admin email address to receive SNS notifications for job status.",
             allowedPattern: "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"
+        });
+        const notificationUrl = new cdk.CfnParameter(this, "notificationUrl", {
+            type: "String",
+            description: "The URL to receive SNS notifications for job status.",
+            allowedPattern: "^https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)$"
         });
         /**
          * Logs bucket for S3 and CloudFront
@@ -351,7 +357,15 @@ export class VodFoundation extends cdk.Stack {
         /**
          * Subscribe the admin email address to the SNS topic created but the construct.
          */
-        snsTopic.snsTopic.addSubscription(new subs.EmailSubscription(adminEmail.valueAsString))
+        snsTopic.snsTopic.addSubscription(new subs.EmailSubscription(adminEmail.valueAsString));
+
+        /**
+         * Subscribe the notification URL to the SNS topic created by the construct.
+         */
+        snsTopic.snsTopic.addSubscription(new subs.UrlSubscription(notificationUrl.valueAsString, { 
+            protocol: sns.SubscriptionProtocol.HTTPS
+        }));
+
         /**
          * Stack Outputs
         */
