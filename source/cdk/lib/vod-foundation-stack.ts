@@ -4,6 +4,7 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as subs from '@aws-cdk/aws-sns-subscriptions';
 import * as sns from '@aws-cdk/aws-sns';
+import * as cf from '@aws-cdk/aws-cloudfront';
 import { HttpMethods } from '@aws-cdk/aws-s3';
 /**
  * AWS Solution Constructs: https://docs.aws.amazon.com/solutions/latest/constructs/
@@ -113,6 +114,9 @@ export class VodFoundation extends cdk.Stack {
             insertHttpSecurityHeaders: false,
             cloudFrontDistributionProps: {
                 comment:`${cdk.Aws.STACK_NAME} Video on Demand Foundation`,
+                defaultBehavior: {
+                    originRequestPolicy: cf.OriginRequestPolicy.CORS_S3_ORIGIN
+                },
                 defaultCacheBehavior: {
                     allowedMethods: [ 'GET', 'HEAD','OPTIONS' ],
                     Compress: false,
