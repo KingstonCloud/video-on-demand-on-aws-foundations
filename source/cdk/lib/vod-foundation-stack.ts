@@ -105,6 +105,27 @@ export class VodFoundation extends cdk.Stack {
               ],
         });
         /**
+         * CloudFront Functions event type: viewer response
+         * This function adds an Access-Control-Allow-Origin response header if it is not present in the outgoing response from CloudFront.
+         * The Access-Control-Allow-Origin header is part of Cross-Origin Resource Sharing (CORS), a mechanism using HTTP headers to tell browsers to
+         * give a web application running at one origin access to selected resources from a different origin.
+         * The Access-Control-Allow-Origin response header indicates whether the response can be shared with requesting code from the given origin.
+         * In this example, we are setting the value to the Origin request header, if the origin header is present.
+         */
+        const cloudfrontFunction = new cf.Function(this, "CrossOriginResourceSharingFunction", {
+            code: cf.FunctionCode.fromInline("function handler(event)  {\
+                var response = event.response;\
+                var headers = response.headers;\
+                // If Access-Control-Allow-Origin CORS header is missing, add it.\
+                // Since JavaScript doesn't allow for hyphens in variable names, we use the dict[\"key\"] notation.\
+                if(!headers['access-control-allow-origin']) {\
+                    headers['access-control-allow-origin'] = { value: \"*\" };\
+                    console.log(\"Access-Control-Allow-Origin was missing, adding it now.\");\
+                }\
+                return response;\
+            }")
+        });
+        /**
          * Solutions construct to create Cloudfrotnt with an s3 bucket as the origin
          * https://docs.aws.amazon.com/solutions/latest/constructs/aws-cloudfront-s3.html
          * insertHttpSecurityHeaders is set to false as this requires the deployment to be in us-east-1
@@ -115,7 +136,13 @@ export class VodFoundation extends cdk.Stack {
             cloudFrontDistributionProps: {
                 comment:`${cdk.Aws.STACK_NAME} Video on Demand Foundation`,
                 defaultBehavior: {
-                    originRequestPolicy: cf.OriginRequestPolicy.CORS_S3_ORIGIN
+                    originRequestPolicy: cf.OriginRequestPolicy.CORS_S3_ORIGIN,
+                    functionAssociations: [
+                        {
+                            eventType: cf.FunctionEventType.VIEWER_RESPONSE,
+                            function: cloudfrontFunction
+                        }
+                    ],
                 },
                 defaultCacheBehavior: {
                     allowedMethods: [ 'GET', 'HEAD','OPTIONS' ],
