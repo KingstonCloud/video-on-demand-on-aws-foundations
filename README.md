@@ -44,7 +44,7 @@ chmod +x ./run-unit-tests.sh
 ### 2. Create an Amazon S3 Bucket
 The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket (e.g. for us-east-1 create a bucket named ```my-bucket-us-east-1```).
 ```
-aws s3 mb s3://my-bucket-us-east-1
+aws s3 mb s3://my-bucket-us-east-2 --profile my-local-profile-name
 ```
 
 ### 3. Create the deployment packages
